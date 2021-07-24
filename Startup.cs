@@ -12,15 +12,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TodoApi.Models;
+using TodoApi.Controllers;
+using TodoApi.Data;
+using TodoApi.Data.Models;
+using TodoApi.Data.Services;
 
 namespace TodoApi
 {
     public class Startup
     {
+        public string ConnectionString { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            ConnectionString = Configuration.GetConnectionString("DefaultConnectionString");
         }
 
         public IConfiguration Configuration { get; }
@@ -33,6 +38,11 @@ namespace TodoApi
             services.AddControllers();
             services.AddDbContext<StudentContext>(opt => opt.UseInMemoryDatabase("Student"));
             services.AddControllers();
+
+            //Configue DBContext SQL
+            services.AddDbContext<BookContext>(opt => opt.UseSqlServer(ConnectionString));
+
+            services.AddTransient<BookService>();
             //services.AddSwaggerGen(c =>
             //{
             //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TodoApi", Version = "v1" });
@@ -59,6 +69,8 @@ namespace TodoApi
             {
                 endpoints.MapControllers();
             });
+
+            DBInitial.Seed(app);
         }
     }
 }

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TodoApi.Models
+namespace TodoApi.Data.Models
 {
-    public class TodoItemDTO
+    public class Student
     {
         public long Id { get; set; }
         public string Name { get; set; }
-        public bool IsComplete { get; set; }
+        public int Grade { get; set; }
     }
 }
