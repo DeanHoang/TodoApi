@@ -16,6 +16,7 @@ using TodoApi.Controllers;
 using TodoApi.Data;
 using TodoApi.Data.Models;
 using TodoApi.Data.Services;
+using TodoApi.Data1;
 
 namespace TodoApi
 {
@@ -39,10 +40,13 @@ namespace TodoApi
             services.AddDbContext<StudentContext>(opt => opt.UseInMemoryDatabase("Student"));
             services.AddControllers();
 
-            //Configue DBContext SQL
-            services.AddDbContext<BookContext>(opt => opt.UseSqlServer(ConnectionString));
+            ////
+            services.AddMvc(opt => opt.EnableEndpointRouting = false)
+                    .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+                    .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-            services.AddTransient<BookService>();
+            //Configue DBContext SQL
+            services.AddDbContext<BookStoresDBContext>(opt => opt.UseSqlServer("Name=DefaultConnectionString"));
             //services.AddSwaggerGen(c =>
             //{
             //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TodoApi", Version = "v1" });
@@ -70,7 +74,7 @@ namespace TodoApi
                 endpoints.MapControllers();
             });
 
-            DBInitial.Seed(app);
+          //  DBInitial.Seed(app);
         }
     }
 }
