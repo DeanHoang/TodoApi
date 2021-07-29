@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TodoApi.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TodoApi.Models1;
 
 namespace TodoApi.Controllers
 {
@@ -12,59 +13,142 @@ namespace TodoApi.Controllers
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        List<Student> Students = new List<Student>()
+        private readonly SchoolDBContext _context;
+
+        public StudentsController(SchoolDBContext context)
         {
-            new Student(){Id=1,Name="Abc",Grade=12 },
-            new Student(){Id=2,Name="ABB",Grade=12 },
-            new Student(){Id=3,Name="HHHH",Grade=12 },
-            new Student(){Id=4,Name="UUASD",Grade=12 },
-            new Student(){Id=5,Name="NNN",Grade=12 },
-            new Student(){Id=6,Name="THANH",Grade=12 },
-        };
+            _context = context;
+        }
 
-
+        // GET: api/Students
         [HttpGet]
-        public IActionResult Get()
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
         {
-           return Ok(Students);
-        }
-        
-        [HttpGet("{id}")]
-        public IActionResult Get(long id)
-        {
-            var _stu = Students.SingleOrDefault(s => s.Id == id);
-            if (_stu == null) return NotFound();
-            return Ok(_stu);
+            return await _context.Students.ToListAsync();
         }
 
+        // GET: api/Students/5
+        [HttpGet("{studentId}")]
+        public async Task<ActionResult<Student>> GetStudent(int studentId)
+        {
+            var student = await _context.Students.FindAsync(studentId);
 
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            return student;
+        }
+
+        //Get:api/Students/2/Classes
+        [HttpGet("{studentId}/Classes")]
+        public async Task<ActionResult<Student>> GetClassesofStudent(int studentId)
+        {
+            var student = await _context.Students.Include(s => s.ClassErollments)
+                                                    .ThenInclude(cs => cs.Class)
+                                                     .Where(stu => stu.StudentId == studentId)
+                                                     .FirstOrDefaultAsync();
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            return student;
+        }
+
+        // PUT: api/Students/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{studentId}")]
+        public async Task<IActionResult> PutStudent(int studentId, Student student)
+        {
+            if (studentId != student.StudentId)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(student).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!StudentExists(studentId))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // POST: api/Students
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public IActionResult Add(Student stu)
+        public async Task<ActionResult<Student>> PostStudent(Student student)
         {
-            Students.Add(stu);
-            return Ok(Students);
+            _context.Students.Add(student);
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
-        [HttpPut("{id}")]
-        public IActionResult Update(long id, Student stu)
+        //POST: api/Students/2/Classes
+        [HttpPost("{studentId}/Classes")]
+        public async Task<ActionResult<Student>> PostClassesforStudent(int studentId, Class @class)
         {
-            var _stu = Students.SingleOrDefault(s => s.Id == id);
-            if (_stu == null) return NotFound("Not student found");
-            _stu.Id = stu.Id;
-            _stu.Name = stu.Name;
-            _stu.Grade = stu.Grade;
-            return Ok(Students);
+          if(!_context.Classes.Contains(@class)) return NotFound("Class does not exist");
+          ClassErollment classErollment = new ClassErollment()
+          {
+              ClassId = @class.ClassId,
+              StudentId = studentId
+          };
+            _context.ClassErollments.Add(classErollment);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+        // DELETE: api/Students/5
+        [HttpDelete("{studentId}")]
+        public async Task<IActionResult> DeleteStudent(int studentId)
+        {
+            var student = await _context.Students.FindAsync(studentId);
+            if (student == null)
+            {
+                return NotFound("Student does not exist");
+            }
+
+            _context.Students.Remove(student);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-        [HttpDelete("{id}")] 
-        public IActionResult Delete(long id)
+
+        [HttpDelete("{studentId}/Classes/{classId}")]
+        public async Task<IActionResult> DeleteClassforStudent(int studentId,int classId)
         {
-            var _stu = Students.SingleOrDefault(s => s.Id == id);
-            if (_stu == null) return NotFound("Not student found");
-            Students.Remove(_stu);  
-            return Ok(Students);
+            var @classStudents = await _context.ClassErollments.FindAsync(classId, studentId);
+            if (@classStudents == null)
+            {
+                return NotFound("Student is not in this class");
+            }
+
+            _context.ClassErollments.Remove(@classStudents);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
-
+        private bool StudentExists(int studentId)
+        {
+            return _context.Students.Any(e => e.StudentId == studentId);
+        }
     }
 }
