@@ -7,6 +7,15 @@ namespace TodoApi.Models1
 {
     public partial class Class
     {
+        //private static Class instance = null;
+        //public static Class GetInstance
+        //{
+        //    get {
+        //        if (instance == null)
+        //            instance = new Class();
+        //        return instance;
+        //    }
+        //}
         public Class()
         {
             ClassErollments = new HashSet<ClassErollment>();

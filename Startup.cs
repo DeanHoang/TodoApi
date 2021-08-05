@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TodoApi.Models;
 using TodoApi.Models1;
+using TodoApi.Repositories;
 
 namespace TodoApi
 {
@@ -30,12 +31,18 @@ namespace TodoApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            
+           // services.AddScoped<IStudentRepository, Student>();
             services.AddDbContext<TodoContext>(opt => opt.UseInMemoryDatabase("TodoList"));
-            services.AddControllers();
+            
+            services.AddScoped<IStudentRepository, StudentRepository>();
+            services.AddScoped<IClassRepository,ClassRepository>();
+            //      services.AddHttpClient();
             services.AddMvc(option => option.EnableEndpointRouting = false)
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
+            //services.AddControllers().AddNewtonsoftJson(options =>
+            //    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddDbContext<SchoolDBContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("SchoolDB")));
             //services.AddSwaggerGen(c =>
             //{
